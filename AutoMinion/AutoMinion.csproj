@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Dalamud.NET.SDK/12.0.0">
     <PropertyGroup>
-        <Version>1.0.3.0</Version>
+        <Version>1.0.0.0</Version>
         <Description>AutoMinion</Description>
         <PackageProjectUrl>https://github.com/goatcorp/AutoKlia</PackageProjectUrl>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
         <IsPackable>false</IsPackable>
         <TargetFramework>net9.0-windows7.0</TargetFramework>
     </PropertyGroup>
+    <ItemGroup>
+      <Content Include="AutoMinion.json" />
+    </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />

@@ -35,6 +35,9 @@ namespace AutoMinion
         private ConfigWindow ConfigWindow { get; init; }
         private MainWindow MainWindow { get; init; }
 
+        public string playerName = "";
+        public string playerWorld = "";
+
         public Plugin(
             IDalamudPluginInterface pluginInterface,
             ICommandManager commandManager)
@@ -69,7 +72,9 @@ namespace AutoMinion
 
             // Subscribe to territory changes
             Svc.ClientState.TerritoryChanged += OnTerritoryChanged;
-            
+
+
+
         }
 
         private bool CheckScreenFading()
@@ -95,6 +100,23 @@ namespace AutoMinion
             }
         }
 
+        public void UpdatePlayerNameWorld()
+        {
+            try
+            {
+                Svc.Framework.RunOnFrameworkThread(() =>
+                {
+                    playerName = Svc.ClientState?.LocalPlayer.Name.ToString();
+                    playerWorld = Svc.ClientState?.LocalPlayer.HomeWorld.Value.Name.ToString();
+                });
+                PluginLog.Verbose($"PlayerName: {playerName}, PlayerWorld {playerWorld}");
+            }
+            catch (Exception ex)
+            {
+                PluginLog.Error($"Caught Error: {ex.Message}");
+            }
+        }
+
         private async void OnTerritoryChanged(ushort territoryTypeId)
         {
             this.Configuration.PreviousTerritoryID = this.Configuration.CurrentTerritoryID;
@@ -107,72 +129,65 @@ namespace AutoMinion
             // Loop until the player is targetable or until canceled, with async waiting
             while ((DateTime.Now - targetableStartTime).TotalSeconds <= 60) // Inner loop timeout (e.g., 60 seconds)
             {
-                if (Svc.ClientState.LocalPlayer?.IsTargetable == true)
+                if (!CheckScreenFading())
                 {
-                    if (!CheckScreenFading())
+                    UpdatePlayerNameWorld();
+                    string playerNameWorld = $"{playerName}@{playerWorld}";
+
+                    this.Configuration.StaticMode.TryGetValue(playerNameWorld, out bool IsStaticMode);
+
+
+                    PluginLog.Information($"Player Name: {playerNameWorld}");
+                    PluginLog.Information($"TerritoryTypeId: {territoryTypeId}");
+
+                    if (IsInWorkshopChambers(territoryTypeId) || (IsInWorkshopChambers(this.Configuration.PreviousTerritoryID) && IsInHouse(territoryTypeId)))
                     {
-
-                        
-
-                        string playerName = Svc.ClientState?.LocalPlayer.Name.ToString();
-                        string playerWorld = Svc.ClientState?.LocalPlayer.HomeWorld.Value.Name.ToString();
-                        string playerNameWorld = $"{playerName}@{playerWorld}";
-
-                        this.Configuration.StaticMode.TryGetValue(playerNameWorld, out bool IsStaticMode);
-
-
-                        PluginLog.Information($"Player Name: {playerNameWorld}");
-                        PluginLog.Information($"TerritoryTypeId: {territoryTypeId}");
-
-                        if (IsInWorkshopChambers(territoryTypeId) || (IsInWorkshopChambers(this.Configuration.PreviousTerritoryID) && IsInHouse(territoryTypeId)))
-                        {
-                            // Going into private chambers or workshop
-                            return;
-                        }
-
-                        if(!CanSummonMinion())
-                        {
-                            // In an area that minions can't be summoned
-                            return;
-                        }
-
-
-                        if (IsInHouse(territoryTypeId))
-                        {
-                            // Logic for when the player is in a housing area
-                            PluginLog.Information("Player is in a housing area.");
-
-                            if (!IsStaticMode)
-                            {
-                                // Save Minion if not in static mode
-                                SaveMinion();
-                            }
-
-                            var currentMinion = GetCompanion();
-                            if (currentMinion != null)
-                            {
-                                PluginLog.Verbose("Minion exists, saving and dismissing");
-
-                                // Dismiss Minion (example, adjust as needed)
-                                Chat.Instance.SendMessage("/minion");
-                            }
-                        }
-                        else
-                        {
-                            // Logic for when the player is outside housing areas
-                            PluginLog.Information("Player is outside housing areas.");
-
-
-                            var currentMinion = GetCompanion();
-                            if (currentMinion == null)
-                            {
-                                PluginLog.Verbose("Player is now targetable, summoning minion");
-                                // Attempt to retrieve and summon the saved minion asynchronously
-                                await AttemptSummonMinionAsync(playerNameWorld);
-                            }
-                        }
+                        // Going into private chambers or workshop
                         return;
                     }
+
+                    if(!CanSummonMinion())
+                    {
+                        // In an area that minions can't be summoned
+                        return;
+                    }
+
+
+                    if (IsInHouse(territoryTypeId))
+                    {
+                        // Logic for when the player is in a housing area
+                        PluginLog.Information("Player is in a housing area.");
+
+                        if (!IsStaticMode)
+                        {
+                            // Save Minion if not in static mode
+                            SaveMinion();
+                        }
+
+                        var currentMinion = GetCompanion();
+                        if (currentMinion != null)
+                        {
+                            PluginLog.Verbose("Minion exists, saving and dismissing");
+
+                            // Dismiss Minion (example, adjust as needed)
+                            Chat.Instance.SendMessage("/minion");
+                        }
+                    }
+                    else
+                    {
+                        // Logic for when the player is outside housing areas
+                        PluginLog.Information("Player is outside housing areas.");
+
+
+                        var currentMinion = GetCompanion();
+                        if (currentMinion == null)
+                        {
+                            PluginLog.Verbose("Player is now targetable, summoning minion");
+                            // Attempt to retrieve and summon the saved minion asynchronously
+                            await AttemptSummonMinionAsync(playerNameWorld);
+                        }
+                    }
+                    return;
                 }
 
                 // Await asynchronously for a short period before checking again
@@ -261,28 +276,28 @@ namespace AutoMinion
 
         public void SaveMinion()
         {
-            // This will add a new key-value pair if the key does not exist,
-            // or update the value if the key already exists.
-            //string currentMinionName = "Morpho";
-            PluginLog.Verbose("Attempting to save minion info");
+            Svc.Framework.RunOnFrameworkThread(() =>
+            {
+                // This will add a new key-value pair if the key does not exist,
+                // or update the value if the key already exists.
+                //string currentMinionName = "Morpho";
+                PluginLog.Verbose("Attempting to save minion info");
 
-            var currentMinion = GetCompanion();
-            string currentMinionName = currentMinion?.Name.ToString();
-            PluginLog.Verbose($"Current Minion Name: {currentMinionName}");
+                var currentMinion = GetCompanion();
+                string currentMinionName = currentMinion?.Name.ToString();
+                PluginLog.Verbose($"Current Minion Name: {currentMinionName}");
 
-            string playerName = Svc.ClientState?.LocalPlayer.Name.ToString();
-            string playerWorld = Svc.ClientState?.LocalPlayer.HomeWorld.Value.Name.ToString();
-            string playerNameWorld = $"{playerName}@{playerWorld}";
+                string playerNameWorld = $"{playerName}@{playerWorld}";
 
 
-            this.Configuration.SavedMinions[playerNameWorld] = currentMinionName;
-            this.Configuration.Save();
+                this.Configuration.SavedMinions[playerNameWorld] = currentMinionName;
+                this.Configuration.Save();
+            });
         }
 
         public string RetrieveMinion(string charNameWorld)
         {
-            string playerName = Svc.ClientState?.LocalPlayer.Name.ToString();
-            string playerWorld = Svc.ClientState?.LocalPlayer.HomeWorld.Value.Name.ToString();
+            
             string playerNameWorld = $"{playerName}@{playerWorld}";
             this.Configuration.StaticMode.TryGetValue(playerNameWorld, out bool IsStaticEnabled);
 
@@ -314,10 +329,32 @@ namespace AutoMinion
 
         public static IGameObject? GetCompanion()
         {
-            var companion = Svc.Objects[1];
-            if (companion != null && companion.ObjectKind == ObjectKind.Companion) return companion;
+            IGameObject? companion = null;
+            using (var mre = new ManualResetEventSlim())
+            {
+                Svc.Framework.RunOnFrameworkThread(() =>
+                {
+                    try
+                    {
+                        companion = Svc.Objects[1];
+                    }
+                    catch (Exception e)
+                    {
+                        PluginLog.Error(e.Message);
+                    }
+                    finally
+                    {
+                        mre.Set();
+                    }
+                });
+                mre.Wait(); // Wait until the framework thread code completes
+            }
+
+            if (companion != null && companion.ObjectKind == ObjectKind.Companion)
+                return companion;
             return null;
         }
+
 
         public void Dispose()
         {
@@ -330,9 +367,6 @@ namespace AutoMinion
             
             this.CommandManager.RemoveHandler(CommandName);
             Svc.ClientState.TerritoryChanged -= OnTerritoryChanged;
-
-
-
         }
 
         private void OnCommand(string command, string args)

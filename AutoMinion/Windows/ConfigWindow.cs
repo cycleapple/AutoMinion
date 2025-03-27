@@ -14,6 +14,7 @@ namespace AutoMinion.Windows;
 public class ConfigWindow : Window, IDisposable
 {
     private Configuration Configuration;
+    private Plugin Plugin;
 
     public ConfigWindow(Plugin plugin) : base(
         "AutoMinion Configuration",
@@ -24,6 +25,7 @@ public class ConfigWindow : Window, IDisposable
         this.SizeCondition = ImGuiCond.Always;
 
         this.Configuration = plugin.Configuration;
+        this.Plugin = plugin;
         
 
     }
@@ -42,9 +44,8 @@ public class ConfigWindow : Window, IDisposable
 
     public override void Draw()
     {
-        string playerName = Svc.ClientState.LocalPlayer?.Name.ToString();
-        string playerWorld = Svc.ClientState.LocalPlayer?.HomeWorld.Value.Name.ToString();
-        string playerNameWorld = $"{playerName}@{playerWorld}";
+        
+        string playerNameWorld = $"{Plugin.playerName}@{Plugin.playerWorld}";
         var currentCharacterKey = playerNameWorld;
 
         // Your existing code to fetch and sort the companions
