@@ -32,12 +32,12 @@ public class MainWindow : Window, IDisposable
     {
         //ImGui.Text($"The random config bool is {this.Plugin.Configuration.SomePropertyToBeSavedAndWithADefault}");
 
-        if (ImGui.Button("Show Settings"))
+        if (ImGui.Button("顯示設定"))
         {
             this.Plugin.DrawConfigUI();
         }
 
-        if (ImGui.Button("Summon Minion"))
+        if (ImGui.Button("召喚寵物"))
         {
 
 

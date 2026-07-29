@@ -60,7 +60,7 @@ namespace AutoMinion
 
             this.CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
             {
-                HelpMessage = "Open AutoMinion Configuration Window"
+                HelpMessage = "開啟 AutoMinion 設定視窗"
             });
 
             this.PluginInterface.UiBuilder.Draw += DrawUI;

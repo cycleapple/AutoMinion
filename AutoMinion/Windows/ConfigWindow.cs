@@ -17,7 +17,7 @@ public class ConfigWindow : Window, IDisposable
     private Plugin Plugin;
 
     public ConfigWindow(Plugin plugin) : base(
-        "AutoMinion Configuration",
+        "AutoMinion 設定",
         ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
         ImGuiWindowFlags.NoScrollWithMouse)
     {
@@ -71,7 +71,7 @@ public class ConfigWindow : Window, IDisposable
 
         this.Configuration.StaticMode.TryGetValue(playerNameWorld, out bool enableStaticMinion);
 
-        if (ImGui.Checkbox("Enable Static Mode (Will disable dynamic mode)", ref enableStaticMinion))
+        if (ImGui.Checkbox("啟用固定模式（將停用動態模式）", ref enableStaticMinion))
         {
             this.Configuration.StaticMode[currentCharacterKey] = enableStaticMinion;
             this.Configuration.StaticMinions[currentCharacterKey] = companionIdentifiers[selectedCompanionIndex];
@@ -97,7 +97,7 @@ public class ConfigWindow : Window, IDisposable
         {
 
             //ImGui.SetNextItemWidth(150);
-            ImGui.InputTextWithHint("##Filter", "Search...", ref filterString, 255);
+            ImGui.InputTextWithHint("##Filter", "搜尋…", ref filterString, 255);
 
 
             var filteredCompanions = companionIdentifiers.Where(c => c.Contains(filterString, StringComparison.OrdinalIgnoreCase)).ToArray();
