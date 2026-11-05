@@ -4,7 +4,7 @@
     "Punchline": "進入房屋時自動收回寵物，離開後再次召喚。",
     "Description": "進入房屋時自動收回寵物，離開後再次召喚，並可為角色指定固定寵物。",
     "ApplicableVersion": "any",
-    "DalamudApiLevel": 13,
+    "DalamudApiLevel": 14,
     "Tags": [
         "minion",
         "venues"
